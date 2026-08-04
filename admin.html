@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Target Tracker | Admin Performance Monitor</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { 
+            background: #0f172a; 
+            color: #f8fafc; 
+            padding: 30px 20px; 
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 { font-size: 2rem; color: #f43f5e; font-weight: 800; }
+        p.subtitle { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+
+        /* Date Filter Controls */
+        .filter-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1e293b;
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-box label { font-weight: 600; color: #38bdf8; font-size: 0.9rem; }
+        
+        .filter-box input[type="date"] {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #f8fafc;
+            font-size: 0.95rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: center;
+        }
+
+        .stat-card h3 { color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-card .value { font-size: 2rem; font-weight: 800; color: #f8fafc; }
+        .stat-card.insta .value { color: #f43f5e; }
+        .stat-card.yt .value { color: #ef4444; }
+        .stat-card.ggl .value { color: #fbbf24; }
+        .stat-card.total .value { color: #38bdf8; }
+
+        /* Performance Table */
+        .table-container {
+            background: #1e293b;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow-x: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.6);
+            color: #38bdf8;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .manager-name { font-weight: 700; color: #f8fafc; text-transform: capitalize; }
+        
+        .badge-count {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .total-col { font-weight: 800; color: #38bdf8; }
+
+        .empty-msg {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        #loading { text-align: center; color: #38bdf8; font-weight: bold; margin: 30px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-flex">
+            <div>
+                <h1>🎯 Admin Performance Monitor</h1>
+                <p class="subtitle">Live Store Manager Target Tracking & Submission Breakdown</p>
+            </div>
+            
+            <div class="filter-box">
+                <label>📅 Select Date:</label>
+                <input type="date" id="dateFilter" onchange="filterAndRender()">
+            </div>
+        </div>
+
+        <!-- Summary Stat Cards -->
+        <div class="summary-grid">
+            <div class="stat-card insta">
+                <h3>Instagram Follows</h3>
+                <div class="value" id="tot-insta">0</div>
+            </div>
+            <div class="stat-card yt">
+                <h3>YouTube Subscribes</h3>
+                <div class="value" id="tot-yt">0</div>
+            </div>
+            <div class="stat-card ggl">
+                <h3>Google Reviews</h3>
+                <div class="value" id="tot-ggl">0</div>
+            </div>
+            <div class="stat-card total">
+                <h3>Total Submissions</h3>
+                <div class="value" id="tot-all">0</div>
+            </div>
+        </div>
+
+        <div id="loading">⚡ Loading live data from Google Sheet...</div>
+
+        <!-- Name-wise Performance Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Store Manager Name</th>
+                        <th>Instagram Follow</th>
+                        <th>YouTube Subscribe</th>
+                        <th>Google Review</th>
+                        <th>Total Performance</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data Javascript se ayega -->
+                </tbody>
+            </table>
+            <div id="emptyMsg" class="empty-msg" style="display: none;">Is date ke liye koi photo submit nahi hui hai.</div>
+        </div>
+    </div>
+
+    <script>
+        // Aapka diya hua Live CSV link
+        const DATA_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxHv_jFoCFOOd6y0QrHl0uDJQOkpCqKaDCVaXO00VdypofCpyaQQRF79Xj0c0VjNGAJYKhPgnJoFG5/pub?gid=0&single=true&output=csv";
+
+        let allRecords = [];
+
+        // 1. Page load hote hi Current Date set karna (yyyy-mm-dd format me)
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            
+            document.getElementById('dateFilter').value = `${yyyy}-${mm}-${dd}`;
+            fetchSheetData();
+        });
+
+        // 2. CSV Data Fetch Karna
+        async function fetchSheetData() {
+            try {
+                const url = DATA_SHEET_CSV_URL + "&cb=" + new Date().getTime();
+                const response = await fetch(url);
+                const csvText = await response.text();
+                allRecords = parseCSV(csvText);
+                document.getElementById('loading').style.display = 'none';
+                filterAndRender();
+            } catch (error) {
+                document.getElementById('loading').innerText = "⚠️ Error loading data. Kripya CSV URL check karein.";
+                console.error("Fetch error:", error);
+            }
+        }
+
+        // 3. CSV Parser
+        function parseCSV(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            if (lines.length < 2) return [];
+            
+            const headers = lines[0].split(",").map(h => h.replace(/["\r\n]+/g, '').trim().toLowerCase());
+            const data = [];
+
+            // Sheet columns: Date | Time | Manager Name | Criteria | Image URL
+            const dateIdx = headers.indexOf("date") !== -1 ? headers.indexOf("date") : 0;
+            const nameIdx = headers.indexOf("manager name") !== -1 ? headers.indexOf("manager name") : 2;
+            const criteriaIdx = headers.indexOf("criteria") !== -1 ? headers.indexOf("criteria") : 3;
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cols = lines[i].split(",").map(item => item.replace(/["\r\n]+/g, '').trim());
+                if (!cols[dateIdx]) continue;
+
+                data.push({
+                    date: cols[dateIdx],
+                    name: cols[nameIdx] || "Unknown",
+                    criteria: cols[criteriaIdx] || ""
+                });
+            }
+            return data;
+        }
+
+        // 4. Input Date (yyyy-mm-dd) ko Sheet Date (dd/mm/yyyy) me convert karna
+        function formatToSheetDate(yyyy_mm_dd) {
+            if (!yyyy_mm_dd) return "";
+            const parts = yyyy_mm_dd.split("-");
+            return `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/MM/yyyy
+        }
+
+        // 5. Data Filter karke Name-Wise Table banana
+        function filterAndRender() {
+            const selectedDateInput = document.getElementById('dateFilter').value;
+            const targetDateStr = formatToSheetDate(selectedDateInput);
+
+            // Filter by selected date
+            const filtered = allRecords.filter(r => r.date === targetDateStr);
+
+            // Group by Manager Name
+            const managerStats = {};
+            let totalInsta = 0, totalYt = 0, totalGgl = 0;
+
+            filtered.forEach(row => {
+                const name = row.name.toLowerCase();
+                if (!managerStats[name]) {
+                    managerStats[name] = { insta: 0, yt: 0, ggl: 0, total: 0, displayName: row.name };
+                }
+
+                if (row.criteria.toLowerCase().includes("instagram")) {
+                    managerStats[name].insta++;
+                    totalInsta++;
+                } else if (row.criteria.toLowerCase().includes("youtube")) {
+                    managerStats[name].yt++;
+                    totalYt++;
+                } else if (row.criteria.toLowerCase().includes("google")) {
+                    managerStats[name].ggl++;
+                    totalGgl++;
+                }
+                managerStats[name].total++;
+            });
+
+            // Update Top Summary Cards
+            document.getElementById('tot-insta').innerText = totalInsta;
+            document.getElementById('tot-yt').innerText = totalYt;
+            document.getElementById('tot-ggl').innerText = totalGgl;
+            document.getElementById('tot-all').innerText = (totalInsta + totalYt + totalGgl);
+
+            // Render HTML Table
+            const tbody = document.getElementById('tableBody');
+            const emptyMsg = document.getElementById('emptyMsg');
+            tbody.innerHTML = "";
+
+            const managers = Object.values(managerStats);
+
+            if (managers.length === 0) {
+                emptyMsg.style.display = 'block';
+                return;
+            } else {
+                emptyMsg.style.display = 'none';
+            }
+
+            // Sort by Total performance descending
+            managers.sort((a, b) => b.total - a.total);
+
+            managers.forEach(stat => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="manager-name">${stat.displayName}</td>
+                    <td><span class="badge-count" style="color: #f43f5e;">${stat.insta}</span></td>
+                    <td><span class="badge-count" style="color: #ef4444;">${stat.yt}</span></td>
+                    <td><span class="badge-count" style="color: #fbbf24;">${stat.ggl}</span></td>
+                    <td class="total-col">${stat.total}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
