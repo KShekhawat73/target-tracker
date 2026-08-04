@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Manager Target Tracker</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; background: #f0f2f5; margin: 0; }
+      .container { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+      h2 { text-align: center; color: #1a73e8; margin-top: 0; }
+      label { font-weight: bold; margin-top: 15px; display: block; color: #333; }
+      input, select { width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
+      button { width: 100%; background: #1a73e8; color: white; font-weight: bold; font-size: 16px; padding: 14px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; }
+      button:disabled { background: #a0c2f9; cursor: not-allowed; }
+      #preview { max-width: 100%; margin-top: 12px; display: none; border-radius: 8px; border: 1px solid #ddd; }
+      .msg { text-align: center; margin-top: 15px; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>🎯 Target Tracker</h2>
+      
+      <label>Store Manager Name / ID</label>
+      <input type="text" id="managerName" placeholder="Apna naam likhein" required>
+      
+      <label>Select Target Criteria</label>
+      <select id="criteria">
+        <option value="">-- Criteria Select Karein --</option>
+        <option value="Instagram Follow">Instagram Follow</option>
+        <option value="YouTube Subscribe">YouTube Subscribe</option>
+        <option value="Google Review">Google Review</option>
+      </select>
+      
+      <label>Live Photo Click / Gallery Upload</label>
+      <input type="file" id="imageInput" accept="image/*" capture="environment">
+      <img id="preview" />
+      
+      <button id="submitBtn" onclick="sendData()">Submit Proof</button>
+      <div id="status" class="msg"></div>
+    </div>
+
+    <script>
+      // Aapka Google Apps Script Web App URL
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbVZPBeteuskmw4I5CrPcUlKHuUh6-F_ICgl5jBdbhslBbbOby0OIZAW-zm8tIX9QrsQ/exec";
+      let fileData = {};
+
+      document.getElementById('imageInput').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        if (file) {
+          let reader = new FileReader();
+          reader.onload = function(event) {
+            let img = new Image();
+            img.src = event.target.result;
+            img.onload = function() {
+              let canvas = document.createElement('canvas');
+              let maxWidth = 1000;
+              let scaleSize = maxWidth / img.width;
+              
+              if (img.width > maxWidth) {
+                canvas.width = maxWidth;
+                canvas.height = img.height * scaleSize;
+              } else {
+                canvas.width = img.width;
+                canvas.height = img.height;
+              }
+              
+              let ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              
+              fileData = {
+                image: compressedDataUrl,
+                fileName: (file.name || "proof") + ".jpg",
+                mimeType: "image/jpeg"
+              };
+              
+              let preview = document.getElementById('preview');
+              preview.src = compressedDataUrl;
+              preview.style.display = 'block';
+            };
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      function sendData() {
+        let managerName = document.getElementById('managerName').value;
+        let criteria = document.getElementById('criteria').value;
+        let status = document.getElementById('status');
+        let btn = document.getElementById('submitBtn');
+
+        if (!managerName || !criteria || !fileData.image) {
+          alert("Kripya sabhi details bharein aur image attach karein!");
+          return;
+        }
+
+        btn.disabled = true;
+        status.style.color = '#1a73e8';
+        status.innerText = '⚡ Fast Uploading... Wait karein...';
+
+        let payload = {
+          managerName: managerName,
+          criteria: criteria,
+          image: fileData.image,
+          fileName: fileData.fileName,
+          mimeType: fileData.mimeType
+        };
+
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        })
+        .then(response => response.text())
+        .then(data => {
+          status.style.color = 'green';
+          status.innerText = "✔ Successfully Save Ho Gaya!";
+          document.getElementById('managerName').value = '';
+          document.getElementById('criteria').value = '';
+          document.getElementById('imageInput').value = '';
+          document.getElementById('preview').style.display = 'none';
+          fileData = {};
+          btn.disabled = false;
+        })
+        .catch(error => {
+          status.style.color = 'red';
+          status.innerText = "Error: " + error.message;
+          btn.disabled = false;
+        });
+      }
+    </script>
+  </body>
+</html>
