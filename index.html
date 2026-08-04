@@ -19,8 +19,8 @@
     <div class="container">
       <h2>🎯 Target Tracker</h2>
       
-      <label>Store Manager Name / ID</label>
-      <input type="text" id="managerName" placeholder="Apna naam likhein" required>
+      <!-- Store Manager Name input ko screen se HIDE kar diya hai -->
+      <input type="hidden" id="managerName" value="">
       
       <label>Select Target Criteria</label>
       <select id="criteria">
@@ -42,6 +42,14 @@
       // Aapka Google Apps Script Web App URL
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbVZPBeteuskmw4I5CrPcUlKHuUh6-F_ICgl5jBdbhslBbbOby0OIZAW-zm8tIX9QrsQ/exec";
       let fileData = {};
+
+      // URL ya LocalStorage se automatic Logged-In User ID pick karna
+      window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        // Dashboard se aane wala ?user=xxx ya localStorage se username lega
+        const autoUser = urlParams.get('user') || localStorage.getItem('username') || "Store Manager";
+        document.getElementById('managerName').value = autoUser;
+      });
 
       document.getElementById('imageInput').addEventListener('change', function(e) {
         let file = e.target.files[0];
@@ -88,8 +96,8 @@
         let status = document.getElementById('status');
         let btn = document.getElementById('submitBtn');
 
-        if (!managerName || !criteria || !fileData.image) {
-          alert("Kripya sabhi details bharein aur image attach karein!");
+        if (!criteria || !fileData.image) {
+          alert("Kripya criteria select karein aur image attach karein!");
           return;
         }
 
@@ -113,7 +121,6 @@
         .then(data => {
           status.style.color = 'green';
           status.innerText = "✔ Successfully Save Ho Gaya!";
-          document.getElementById('managerName').value = '';
           document.getElementById('criteria').value = '';
           document.getElementById('imageInput').value = '';
           document.getElementById('preview').style.display = 'none';
