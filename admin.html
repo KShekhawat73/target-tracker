@@ -29,10 +29,10 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Update: Admin Title Styling */
+        /* Admin Title Styling */
         h1 { 
             font-size: 2.2rem; 
-            color: #38bdf8; /* Cool blue for main text */
+            color: #38bdf8; 
             font-weight: 800; 
             display: flex;
             align-items: center;
@@ -45,9 +45,9 @@
             font-size: 2rem;
         }
         
-        /* Update: Logo Colors */
+        /* Logo Colors */
         .title-icons .fa-instagram { color: #E1306C; } /* Instagram Pink */
-        .title-icons .fa-youtube { color: #FF0000; }   /* YouTube Red */
+        .title-icons .fa-youtube { color: #FF0000; }   /* YouTube Red (Kept red only for the logo) */
         .title-icons .fa-google { color: #4285F4; }    /* Google Blue */
 
         p.subtitle { color: #94a3b8; font-size: 0.95rem; margin-top: 8px; }
@@ -105,9 +105,9 @@
         .stat-card h3 { font-size: 0.85rem; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
         .stat-card .value { font-size: 2.2rem; font-weight: 800; }
         
-        /* Update: Distinct Colors for Summary Cards */
+        /* Distinct Colors for Summary Cards */
         .stat-card.insta h3, .stat-card.insta .value { color: #E1306C; text-shadow: 0 0 10px rgba(225, 48, 108, 0.2); } /* Insta Pink */
-        .stat-card.yt h3, .stat-card.yt .value { color: #FF0000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.2); }       /* YouTube Red */
+        .stat-card.yt h3, .stat-card.yt .value { color: #ffffff; text-shadow: none; } /* YouTube updated to white to prevent eye strain */
         .stat-card.ggl h3, .stat-card.ggl .value { color: #4285F4; text-shadow: 0 0 10px rgba(66, 133, 244, 0.2); }    /* Google Blue */
         .stat-card.total h3, .stat-card.total .value { color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2); } /* Total Green */
 
@@ -124,10 +124,10 @@
         th, td { padding: 16px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
         th { background: rgba(15, 23, 42, 0.6); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
         
-        /* Update: Table Header Colors */
+        /* Table Header Colors */
         th:nth-child(1) { color: #f8fafc; } /* Manager Name */
         th:nth-child(2) { color: #E1306C; } /* Instagram */
-        th:nth-child(3) { color: #FF0000; } /* YouTube */
+        th:nth-child(3) { color: #ffffff; } /* YouTube updated to white */
         th:nth-child(4) { color: #4285F4; } /* Google */
         th:nth-child(5) { color: #10b981; } /* Total */
 
@@ -247,7 +247,8 @@
                     <!-- Data Javascript se ayega -->
                 </tbody>
             </table>
-            <div id="emptyMsg" class="empty-msg" style="display: none;">Is filter combination ke liye koi data nahi mila.</div>
+            <!-- Updated empty message text -->
+            <div id="emptyMsg" class="empty-msg" style="display: none;">🚫 No data found.</div>
         </div>
     </div>
 
@@ -447,7 +448,7 @@
                 tr.innerHTML = `
                     <td class="manager-name">${stat.displayName}</td>
                     <td><span class="badge-count" style="color: #E1306C;">${stat.insta}</span></td>
-                    <td><span class="badge-count" style="color: #FF0000;">${stat.yt}</span></td>
+                    <td><span class="badge-count" style="color: #ffffff;">${stat.yt}</span></td>
                     <td><span class="badge-count" style="color: #4285F4;">${stat.ggl}</span></td>
                     <td class="total-col">${stat.total}</td>
                 `;
