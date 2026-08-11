@@ -47,7 +47,7 @@
         
         /* Logo Colors */
         .title-icons .fa-instagram { color: #E1306C; } /* Instagram Pink */
-        .title-icons .fa-youtube { color: #FF0000; }   /* YouTube Red (Kept red only for the logo) */
+        .title-icons .fa-youtube { color: #ffffff; }   /* YouTube White */
         .title-icons .fa-google { color: #4285F4; }    /* Google Blue */
 
         p.subtitle { color: #94a3b8; font-size: 0.95rem; margin-top: 8px; }
@@ -106,10 +106,10 @@
         .stat-card .value { font-size: 2.2rem; font-weight: 800; }
         
         /* Distinct Colors for Summary Cards */
-        .stat-card.insta h3, .stat-card.insta .value { color: #E1306C; text-shadow: 0 0 10px rgba(225, 48, 108, 0.2); } /* Insta Pink */
-        .stat-card.yt h3, .stat-card.yt .value { color: #ffffff; text-shadow: none; } /* YouTube updated to white to prevent eye strain */
-        .stat-card.ggl h3, .stat-card.ggl .value { color: #4285F4; text-shadow: 0 0 10px rgba(66, 133, 244, 0.2); }    /* Google Blue */
-        .stat-card.total h3, .stat-card.total .value { color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2); } /* Total Green */
+        .stat-card.insta h3, .stat-card.insta .value { color: #E1306C; text-shadow: 0 0 10px rgba(225, 48, 108, 0.2); }
+        .stat-card.yt h3, .stat-card.yt .value { color: #ffffff; text-shadow: none; }
+        .stat-card.ggl h3, .stat-card.ggl .value { color: #4285F4; text-shadow: 0 0 10px rgba(66, 133, 244, 0.2); }
+        .stat-card.total h3, .stat-card.total .value { color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
 
         /* Performance Table */
         .table-container {
@@ -125,18 +125,16 @@
         th, td { padding: 16px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
         th { background: rgba(15, 23, 42, 0.6); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
         
-        /* Table Header Colors */
-        th:nth-child(1) { color: #f8fafc; } /* Manager Name */
-        th:nth-child(2) { color: #E1306C; } /* Instagram */
-        th:nth-child(3) { color: #ffffff; } /* YouTube updated to white */
-        th:nth-child(4) { color: #4285F4; } /* Google */
-        th:nth-child(5) { color: #10b981; } /* Total */
+        th:nth-child(1) { color: #f8fafc; } 
+        th:nth-child(2) { color: #E1306C; } 
+        th:nth-child(3) { color: #ffffff; } 
+        th:nth-child(4) { color: #4285F4; } 
+        th:nth-child(5) { color: #10b981; } 
 
         tr:hover { background: rgba(255, 255, 255, 0.02); }
 
         .manager-name { font-weight: 700; color: #f8fafc; text-transform: capitalize; }
         
-        /* Badges Update */
         .badge-count {
             display: inline-block;
             padding: 4px 10px;
@@ -151,17 +149,21 @@
         .empty-msg { text-align: center; padding: 40px; color: #94a3b8; font-size: 1.1rem; }
         #loading { text-align: center; color: #38bdf8; font-weight: bold; margin: 30px 0; font-size: 1.2rem; }
 
-        /* User Proofs Gallery CSS (NEW) */
+        /* User Proofs Gallery CSS (WITH THUMBNAILS) */
         .proofs-section { display: none; margin-top: 20px; }
-        .proofs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
-        .proof-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; text-align: center; transition: transform 0.2s;}
+        .proofs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .proof-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; text-align: center; transition: transform 0.2s; display: flex; flex-direction: column; align-items: center;}
         .proof-card:hover { transform: translateY(-5px); border-color: #38bdf8; }
-        .proof-crit { font-weight: 800; margin-bottom: 8px; font-size: 1.05rem;}
+        
+        /* New Image Thumbnail CSS */
+        .proof-thumb { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.05); }
+        
+        .proof-crit { font-weight: 800; margin-bottom: 6px; font-size: 1rem;}
         .proof-crit.Instagram { color: #E1306C; }
         .proof-crit.YouTube { color: #ffffff; }
         .proof-crit.Google { color: #4285F4; }
-        .proof-date { font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; }
-        .proof-btn { display: inline-block; padding: 8px 15px; background: #38bdf8; color: #0f172a; text-decoration: none; font-weight: bold; border-radius: 6px; font-size: 0.9rem; }
+        .proof-date { font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px; }
+        .proof-btn { display: inline-block; padding: 6px 15px; background: #38bdf8; color: #0f172a; text-decoration: none; font-weight: bold; border-radius: 6px; font-size: 0.85rem; width: 100%; }
         .proof-btn:hover { background: #0284c7; color: white;}
     </style>
 </head>
@@ -265,7 +267,7 @@
             <div id="emptyMsg" class="empty-msg" style="display: none;">🚫 No data found.</div>
         </div>
 
-        <!-- 5. Proofs Gallery (NEW: Visible only when specific manager is selected) -->
+        <!-- 5. Proofs Gallery with Thumbnails (Visible only when specific manager is selected) -->
         <div class="proofs-section" id="proofsSection">
             <h2 class="section-title">📸 Uploaded Proofs for <span id="proofManagerName" style="color: #38bdf8; text-transform: capitalize;"></span></h2>
             <div class="proofs-grid" id="proofsGrid">
@@ -319,7 +321,7 @@
             }
         }
 
-        // 3. Robust CSV Parser & Date Formatter (UPDATED: Added Time & File URL extraction)
+        // 3. Robust CSV Parser & Date Formatter
         function parseCSV(csvText) {
             const lines = csvText.split(/\r?\n/);
             if (lines.length < 2) return [];
@@ -332,7 +334,7 @@
             const nameIdx = headers.indexOf("manager name") !== -1 ? headers.indexOf("manager name") : 2;
             const criteriaIdx = headers.indexOf("criteria") !== -1 ? headers.indexOf("criteria") : 3;
             
-            // Find URL column dynamically (Assuming it's the 5th column based on Google Apps Script)
+            // Find URL column dynamically
             let urlIdx = headers.findIndex(h => h.includes("url") || h.includes("link") || h.includes("image"));
             if(urlIdx === -1) urlIdx = 4; // Default to 5th column
 
@@ -360,10 +362,28 @@
             return data;
         }
 
+        // Generate direct image rendering URL from Google Drive Share Link
+        function getDriveDirectLink(url) {
+            if (!url) return '';
+            let fileId = '';
+            // Extract File ID from Google Drive URL
+            const match1 = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match1) {
+                fileId = match1[1];
+            } else {
+                const match2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (match2) fileId = match2[1];
+            }
+            
+            if (fileId) {
+                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+            }
+            return url;
+        }
+
         // 4. Populate Store Manager Dropdown
         function populateManagerDropdown() {
             const select = document.getElementById('managerFilter');
-            // Get unique manager names, filter out blanks, and sort alphabetically
             const uniqueManagers = [...new Set(allRecords.map(r => r.name))].filter(n => n !== "Unknown" && n.trim() !== "").sort();
             
             uniqueManagers.forEach(manager => {
@@ -374,7 +394,7 @@
             });
         }
 
-        // 5. Calculate & Render Current Month Summary (Static, ignores filters)
+        // 5. Calculate & Render Current Month Summary
         function renderCurrentMonthSummary() {
             const today = new Date();
             const currentMonth = today.getMonth();
@@ -398,34 +418,25 @@
             document.getElementById('month-all').innerText = mTotal;
         }
 
-        // 6. Filter by Date Range & Manager, then Render Table, Stats & Gallery
+        // 6. Filter by Date Range & Manager, then Render Table & Gallery
         function filterAndRender() {
             const startVal = document.getElementById('startDate').value;
             const endVal = document.getElementById('endDate').value;
             const selectedManager = document.getElementById('managerFilter').value;
 
-            // Convert input strings (YYYY-MM-DD) to JS Date objects for comparison
             let startDate = startVal ? new Date(startVal) : new Date('2000-01-01');
             let endDate = endVal ? new Date(endVal) : new Date('2100-01-01');
             
-            // Adjust time to cover the whole day
             startDate.setHours(0, 0, 0, 0);
             endDate.setHours(23, 59, 59, 999);
 
-            // Filter the records
             const filtered = allRecords.filter(row => {
                 if(!row.parsedDate) return false;
-                
-                // Check Date Match
                 let isDateMatch = row.parsedDate >= startDate && row.parsedDate <= endDate;
-                
-                // Check Manager Match
                 let isManagerMatch = (selectedManager === "ALL" || row.name.toLowerCase() === selectedManager);
-
                 return isDateMatch && isManagerMatch;
             });
 
-            // Group by Manager Name
             const managerStats = {};
             let totalInsta = 0, totalYt = 0, totalGgl = 0;
 
@@ -449,13 +460,11 @@
                 managerStats[name].total++;
             });
 
-            // Update Filtered Range Summary Cards
             document.getElementById('tot-insta').innerText = totalInsta;
             document.getElementById('tot-yt').innerText = totalYt;
             document.getElementById('tot-ggl').innerText = totalGgl;
             document.getElementById('tot-all').innerText = (totalInsta + totalYt + totalGgl);
 
-            // Render HTML Table
             const tbody = document.getElementById('tableBody');
             const emptyMsg = document.getElementById('emptyMsg');
             tbody.innerHTML = "";
@@ -468,7 +477,6 @@
                 emptyMsg.style.display = 'none';
             }
 
-            // Sort by Total performance descending
             managers.sort((a, b) => b.total - a.total);
 
             managers.forEach(stat => {
@@ -483,7 +491,7 @@
                 tbody.appendChild(tr);
             });
 
-            // 7. NEW: Render Proof Gallery (Only if a specific manager is chosen)
+            // 7. Render Proof Gallery with Images
             const proofsSection = document.getElementById('proofsSection');
             const proofsGrid = document.getElementById('proofsGrid');
             
@@ -492,21 +500,28 @@
                 document.getElementById('proofManagerName').innerText = managers[0].displayName; 
                 proofsGrid.innerHTML = '';
 
-                filtered.forEach(row => {
-                    if (row.fileUrl) { // Only render if a URL exists
+                // Reverse the array to show latest uploads first
+                const reversedFiltered = [...filtered].reverse();
+
+                reversedFiltered.forEach(row => {
+                    if (row.fileUrl) { 
                         let critClass = "";
                         if (row.criteria.toLowerCase().includes("instagram")) critClass = "Instagram";
                         else if (row.criteria.toLowerCase().includes("youtube")) critClass = "YouTube";
                         else if (row.criteria.toLowerCase().includes("google")) critClass = "Google";
 
                         let timeString = row.time ? `| 🕒 ${row.time}` : '';
+                        
+                        // Convert Google Drive Link to Direct Image Thumbnail
+                        let directImgUrl = getDriveDirectLink(row.fileUrl);
 
                         const card = document.createElement('div');
                         card.className = 'proof-card';
                         card.innerHTML = `
+                            <img src="${directImgUrl}" alt="Proof Image" class="proof-thumb" onerror="this.src='https://via.placeholder.com/200x150?text=Preview+Not+Available'">
                             <div class="proof-crit ${critClass}">${row.criteria}</div>
                             <div class="proof-date">📅 ${row.rawDate} ${timeString}</div>
-                            <a href="${row.fileUrl}" target="_blank" class="proof-btn">🔗 View Photo</a>
+                            <a href="${row.fileUrl}" target="_blank" class="proof-btn">🔗 Full View</a>
                         `;
                         proofsGrid.appendChild(card);
                     }
