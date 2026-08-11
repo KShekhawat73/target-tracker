@@ -31,7 +31,7 @@
     <div class="container">
       <h2>🎯 Target Tracker</h2>
       
-      <!-- Hidden Input (Manager ID automatically save hogi) -->
+      <!-- Hidden Input for Manager ID -->
       <input type="hidden" id="managerName" value="">
       
       <label style="margin-top: 5px;">Select Target Criteria</label>
@@ -42,14 +42,12 @@
         <option value="Google Review">Google Review</option>
       </select>
       
-      <!-- Option 1: Direct Live Camera -->
       <label style="margin-top: 20px;">Upload Proof (Max 3 Photos)</label>
       <div class="file-input-wrapper">
         <label>📸 Option 1: Live Camera Click</label>
         <input type="file" id="cameraInput" accept="image/*" capture="environment">
       </div>
 
-      <!-- Option 2: Gallery Upload -->
       <div class="file-input-wrapper">
         <label>🖼️ Option 2: Gallery Upload</label>
         <input type="file" id="galleryInput" accept="image/*" multiple>
@@ -67,21 +65,21 @@
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbVZPBeteuskmw4I5CrPcUlKHuUh6-F_ICgl5jBdbhslBbbOby0OIZAW-zm8tIX9QrsQ/exec";
       
       let processedImages = [];
-      let currentSignatures = new Set(); 
+      let currentSessionSignatures = new Set(); 
 
-      // Jab page load hoga, URL se ID uthakar hidden input me daal dega
+      // Load past uploaded signatures from Local Storage (Cross-Session Duplicate Check)
+      let pastUploadedHashes = JSON.parse(localStorage.getItem('uploaded_proofs') || '[]');
+
       window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const autoUser = urlParams.get('user') || localStorage.getItem('username') || "Unknown Manager";
         document.getElementById('managerName').value = autoUser;
       });
 
-      // Camera & Gallery Process Logic
       function processSelectedFiles(e) {
         let files = Array.from(e.target.files);
         let previewContainer = document.getElementById('previewContainer');
-        
-        e.target.value = ''; // Input ko khali karna
+        e.target.value = ''; 
 
         if (processedImages.length >= 3) {
           alert("⚠️ Aap pehle hi 3 photos add kar chuke hain!");
@@ -90,19 +88,21 @@
 
         let slotsLeft = 3 - processedImages.length;
         if (files.length > slotsLeft) {
-          alert(`⚠️ Max 3 photos allowed! Sirf ${slotsLeft} photo(s) aur li jaayengi, baaki remove kar di gayi hain.`);
+          alert(`⚠️ Max 3 photos allowed! Sirf ${slotsLeft} photo(s) li jayengi.`);
           files = files.slice(0, slotsLeft);
         }
 
         let duplicateFound = false;
 
         files.forEach((file, index) => {
-          let sig = file.name + "_" + file.size;
-          if (currentSignatures.has(sig)) {
+          // STRICT DUPLICATE CHECK: File Name + File Size + Last Modified Date
+          let sig = file.name + "_" + file.size + "_" + file.lastModified;
+          
+          if (pastUploadedHashes.includes(sig) || currentSessionSignatures.has(sig)) {
             duplicateFound = true;
-            return;
+            return; // Reject this file
           }
-          currentSignatures.add(sig);
+          currentSessionSignatures.add(sig);
 
           let reader = new FileReader();
           reader.onload = function(event) {
@@ -129,7 +129,8 @@
               processedImages.push({
                 image: compressedDataUrl,
                 fileName: (file.name || `proof_${Date.now()}`) + ".jpg",
-                mimeType: "image/jpeg"
+                mimeType: "image/jpeg",
+                signature: sig // Keep signature to save it after successful upload
               });
 
               let previewImg = document.createElement('img');
@@ -144,18 +145,17 @@
 
         if (duplicateFound) {
           setTimeout(() => {
-            alert("🚫 Duplicate photos are not allowed by admin! Duplicate image automatically hata di gayi hai.");
-          }, 300);
+            alert("🚫 Similar/Duplicate photo detected! Ye photo aap pehle hi upload kar chuke hain, isliye ise block kar diya gaya hai.");
+          }, 400);
         }
       }
 
       document.getElementById('cameraInput').addEventListener('change', processSelectedFiles);
       document.getElementById('galleryInput').addEventListener('change', processSelectedFiles);
 
-      // Photos clear karne ka function
       function clearImages() {
         processedImages = [];
-        currentSignatures.clear();
+        currentSessionSignatures.clear();
         document.getElementById('previewContainer').innerHTML = '';
         document.getElementById('clearBtn').style.display = 'none';
       }
@@ -191,7 +191,14 @@
             status.style.color = 'green';
             status.innerText = `✔ ${processedImages.length} Photo(s) Successfully Save Ho Gayi!`;
             
-            // Form Reset (Manager Name khali nahi hoga)
+            // SAVE SUCCESSFULLY UPLOADED HASHES TO PREVENT FUTURE DUPLICATES
+            processedImages.forEach(img => {
+                pastUploadedHashes.push(img.signature);
+            });
+            // Keep array size manageable (last 500 images)
+            if(pastUploadedHashes.length > 500) pastUploadedHashes = pastUploadedHashes.slice(-500);
+            localStorage.setItem('uploaded_proofs', JSON.stringify(pastUploadedHashes));
+
             document.getElementById('criteria').value = '';
             clearImages(); 
           } else {
