@@ -149,13 +149,13 @@
         .empty-msg { text-align: center; padding: 40px; color: #94a3b8; font-size: 1.1rem; }
         #loading { text-align: center; color: #38bdf8; font-weight: bold; margin: 30px 0; font-size: 1.2rem; }
 
-        /* User Proofs Gallery CSS (WITH THUMBNAILS) */
+        /* User Proofs Gallery CSS */
         .proofs-section { display: none; margin-top: 20px; }
         .proofs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
         .proof-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; text-align: center; transition: transform 0.2s; display: flex; flex-direction: column; align-items: center;}
         .proof-card:hover { transform: translateY(-5px); border-color: #38bdf8; }
         
-        /* New Image Thumbnail CSS */
+        /* Image Thumbnail CSS */
         .proof-thumb { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.05); }
         
         .proof-crit { font-weight: 800; margin-bottom: 6px; font-size: 1rem;}
@@ -267,7 +267,7 @@
             <div id="emptyMsg" class="empty-msg" style="display: none;">🚫 No data found.</div>
         </div>
 
-        <!-- 5. Proofs Gallery with Thumbnails (Visible only when specific manager is selected) -->
+        <!-- 5. Proofs Gallery -->
         <div class="proofs-section" id="proofsSection">
             <h2 class="section-title">📸 Uploaded Proofs for <span id="proofManagerName" style="color: #38bdf8; text-transform: capitalize;"></span></h2>
             <div class="proofs-grid" id="proofsGrid">
@@ -362,11 +362,11 @@
             return data;
         }
 
-        // Generate direct image rendering URL from Google Drive Share Link
-        function getDriveDirectLink(url) {
-            if (!url) return '';
+        // Generate Dual-Fallback Image URLs to prevent blank boxes
+        function getDriveImageUrls(url) {
+            if (!url) return { primary: '', fallback: '' };
             let fileId = '';
-            // Extract File ID from Google Drive URL
+            
             const match1 = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
             if (match1) {
                 fileId = match1[1];
@@ -376,9 +376,12 @@
             }
             
             if (fileId) {
-                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                return {
+                    primary: `https://lh3.googleusercontent.com/d/${fileId}`,
+                    fallback: `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`
+                };
             }
-            return url;
+            return { primary: url, fallback: url };
         }
 
         // 4. Populate Store Manager Dropdown
@@ -512,13 +515,14 @@
 
                         let timeString = row.time ? `| 🕒 ${row.time}` : '';
                         
-                        // Convert Google Drive Link to Direct Image Thumbnail
-                        let directImgUrl = getDriveDirectLink(row.fileUrl);
+                        // Dual Layer Fallback system implemented below
+                        let imgUrls = getDriveImageUrls(row.fileUrl);
 
                         const card = document.createElement('div');
                         card.className = 'proof-card';
                         card.innerHTML = `
-                            <img src="${directImgUrl}" alt="Proof Image" class="proof-thumb" onerror="this.src='https://via.placeholder.com/200x150?text=Preview+Not+Available'">
+                            <img src="${imgUrls.primary}" alt="Proof Image" class="proof-thumb" 
+                                 onerror="if(!this.dataset.retried){ this.dataset.retried='true'; this.src='${imgUrls.fallback}'; } else { this.src='https://placehold.co/400x300/1e293b/38bdf8?text=Preview+Blocked'; }">
                             <div class="proof-crit ${critClass}">${row.criteria}</div>
                             <div class="proof-date">📅 ${row.rawDate} ${timeString}</div>
                             <a href="${row.fileUrl}" target="_blank" class="proof-btn">🔗 Full View</a>
