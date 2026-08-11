@@ -3,10 +3,23 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Store Manager Target Tracker</title>
+    <!-- Font Awesome for Logos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
       body { font-family: Arial, sans-serif; padding: 20px; background: #f0f2f5; margin: 0; }
       .container { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-      h2 { text-align: center; color: #1a73e8; margin-top: 0; }
+      
+      /* Target Tracker Title Styling */
+      h2 { 
+          text-align: center; 
+          color: #1a73e8; 
+          margin-top: 0; 
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+      }
+
       label { font-weight: bold; margin-top: 15px; display: block; color: #333; }
       select { width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
       
@@ -22,6 +35,30 @@
       .preview-container img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
       
       .msg { text-align: center; margin-top: 15px; font-weight: bold; }
+
+      /* Social Links Styling */
+      .social-links {
+          display: flex;
+          justify-content: space-around;
+          margin-top: 25px;
+          padding-top: 20px;
+          border-top: 1px solid #eee;
+      }
+      .social-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+          font-weight: bold;
+          font-size: 14px;
+          padding: 10px 15px;
+          border-radius: 8px;
+          transition: transform 0.2s;
+      }
+      .social-btn:hover { transform: translateY(-2px); }
+      .btn-insta { background: #fff0f5; color: #E1306C; border: 1px solid #ffd1dc; }
+      .btn-yt { background: #fff0f0; color: #FF0000; border: 1px solid #ffcccc; }
+      
     </style>
   </head>
   <body>
@@ -54,6 +91,17 @@
       
       <button id="submitBtn" onclick="sendData()">Submit Proof</button>
       <div id="status" class="msg"></div>
+
+      <!-- NEW: Social Redirect Links -->
+      <div class="social-links">
+          <a href="https://www.instagram.com/sivmorgadgets?igsh=ZnVtdGoxeDVqNzY3" target="_blank" class="social-btn btn-insta">
+              <i class="fab fa-instagram" style="font-size: 18px;"></i> Instagram
+          </a>
+          <a href="https://www.youtube.com/@SIVMORGADGETS" target="_blank" class="social-btn btn-yt">
+              <i class="fab fa-youtube" style="font-size: 18px;"></i> YouTube
+          </a>
+      </div>
+
     </div>
 
     <script>
@@ -88,7 +136,6 @@
         let duplicateFound = false;
 
         files.forEach((file, index) => {
-          // File Name + Size + Modified Date mila kar ek unique ID (Signature) banega
           let sig = file.name + "_" + file.size + "_" + file.lastModified;
           
           if (currentSessionSignatures.has(sig)) {
@@ -123,7 +170,7 @@
                 image: compressedDataUrl,
                 fileName: (file.name || `proof_${Date.now()}`) + ".jpg",
                 mimeType: "image/jpeg",
-                signature: sig // Yeh backend pe check hoga
+                signature: sig
               });
 
               let previewImg = document.createElement('img');
@@ -187,13 +234,11 @@
             clearImages(); 
             
           } else if (data === "DUPLICATE_ALL") {
-            // Agar saari photos sheet me already thi
             status.style.color = 'red';
             status.innerText = "🚫 Upload Rejected! Yeh photo(s) pehle se hi database me maujood hain.";
             alert("⚠️ Warning: Aap duplicate proof upload karne ki koshish kar rahe hain. Admin isey accept nahi karega.");
             
           } else if (data.startsWith("PARTIAL_SUCCESS")) {
-            // Agar kuch nayi thi aur kuch purani thi
             let parts = data.split("_");
             status.style.color = 'orange';
             status.innerText = `⚠️ ${parts[2]} Nayi Photo Save Hui, Par ${parts[3]} Duplicate Photo(s) ko Reject Kar Diya Gaya.`;
