@@ -10,17 +10,14 @@
       label { font-weight: bold; margin-top: 15px; display: block; color: #333; }
       select { width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
       
-      /* Style for File Inputs */
       .file-input-wrapper { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 8px; border: 1px dashed #ccc; }
       .file-input-wrapper label { margin-top: 0; color: #1a73e8; font-size: 14px; margin-bottom: 5px;}
       input[type="file"] { width: 100%; font-size: 14px; }
 
-      /* Buttons */
       button { width: 100%; background: #1a73e8; color: white; font-weight: bold; font-size: 16px; padding: 14px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; }
       button:disabled { background: #a0c2f9; cursor: not-allowed; }
       .btn-clear { background: #dc3545; padding: 8px; font-size: 14px; margin-top: 10px; display: none; }
       
-      /* Previews */
       .preview-container { display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px; }
       .preview-container img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
       
@@ -31,7 +28,6 @@
     <div class="container">
       <h2>🎯 Target Tracker</h2>
       
-      <!-- Hidden Input for Manager ID -->
       <input type="hidden" id="managerName" value="">
       
       <label style="margin-top: 5px;">Select Target Criteria</label>
@@ -67,9 +63,6 @@
       let processedImages = [];
       let currentSessionSignatures = new Set(); 
 
-      // Load past uploaded signatures from Local Storage (Cross-Session Duplicate Check)
-      let pastUploadedHashes = JSON.parse(localStorage.getItem('uploaded_proofs') || '[]');
-
       window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const autoUser = urlParams.get('user') || localStorage.getItem('username') || "Unknown Manager";
@@ -95,12 +88,12 @@
         let duplicateFound = false;
 
         files.forEach((file, index) => {
-          // STRICT DUPLICATE CHECK: File Name + File Size + Last Modified Date
+          // File Name + Size + Modified Date mila kar ek unique ID (Signature) banega
           let sig = file.name + "_" + file.size + "_" + file.lastModified;
           
-          if (pastUploadedHashes.includes(sig) || currentSessionSignatures.has(sig)) {
+          if (currentSessionSignatures.has(sig)) {
             duplicateFound = true;
-            return; // Reject this file
+            return; 
           }
           currentSessionSignatures.add(sig);
 
@@ -130,7 +123,7 @@
                 image: compressedDataUrl,
                 fileName: (file.name || `proof_${Date.now()}`) + ".jpg",
                 mimeType: "image/jpeg",
-                signature: sig // Keep signature to save it after successful upload
+                signature: sig // Yeh backend pe check hoga
               });
 
               let previewImg = document.createElement('img');
@@ -145,7 +138,7 @@
 
         if (duplicateFound) {
           setTimeout(() => {
-            alert("🚫 Similar/Duplicate photo detected! Ye photo aap pehle hi upload kar chuke hain, isliye ise block kar diya gaya hai.");
+            alert("🚫 Duplicate photo detect hui! Aapne same photo dobara select ki hai.");
           }, 400);
         }
       }
@@ -173,7 +166,7 @@
 
         btn.disabled = true;
         status.style.color = '#1a73e8';
-        status.innerText = `⚡ Uploading ${processedImages.length} photo(s)... Wait karein...`;
+        status.innerText = `⚡ Uploading ${processedImages.length} photo(s)... Database me duplicate check ho raha hai...`;
 
         let payload = {
           managerName: managerName,
@@ -187,20 +180,26 @@
         })
         .then(response => response.text())
         .then(data => {
-          if (data.includes("Success")) {
+          if (data === "Success") {
             status.style.color = 'green';
             status.innerText = `✔ ${processedImages.length} Photo(s) Successfully Save Ho Gayi!`;
-            
-            // SAVE SUCCESSFULLY UPLOADED HASHES TO PREVENT FUTURE DUPLICATES
-            processedImages.forEach(img => {
-                pastUploadedHashes.push(img.signature);
-            });
-            // Keep array size manageable (last 500 images)
-            if(pastUploadedHashes.length > 500) pastUploadedHashes = pastUploadedHashes.slice(-500);
-            localStorage.setItem('uploaded_proofs', JSON.stringify(pastUploadedHashes));
-
             document.getElementById('criteria').value = '';
             clearImages(); 
+            
+          } else if (data === "DUPLICATE_ALL") {
+            // Agar saari photos sheet me already thi
+            status.style.color = 'red';
+            status.innerText = "🚫 Upload Rejected! Yeh photo(s) pehle se hi database me maujood hain.";
+            alert("⚠️ Warning: Aap duplicate proof upload karne ki koshish kar rahe hain. Admin isey accept nahi karega.");
+            
+          } else if (data.startsWith("PARTIAL_SUCCESS")) {
+            // Agar kuch nayi thi aur kuch purani thi
+            let parts = data.split("_");
+            status.style.color = 'orange';
+            status.innerText = `⚠️ ${parts[2]} Nayi Photo Save Hui, Par ${parts[3]} Duplicate Photo(s) ko Reject Kar Diya Gaya.`;
+            document.getElementById('criteria').value = '';
+            clearImages();
+            
           } else {
             status.style.color = 'red';
             status.innerText = data; 
