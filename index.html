@@ -8,10 +8,22 @@
       .container { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
       h2 { text-align: center; color: #1a73e8; margin-top: 0; }
       label { font-weight: bold; margin-top: 15px; display: block; color: #333; }
-      input, select { width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
+      input[type="text"], select { width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
+      
+      /* Style for File Inputs */
+      .file-input-wrapper { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 8px; border: 1px dashed #ccc; }
+      .file-input-wrapper label { margin-top: 0; color: #1a73e8; font-size: 14px; margin-bottom: 5px;}
+      input[type="file"] { width: 100%; font-size: 14px; }
+
+      /* Buttons */
       button { width: 100%; background: #1a73e8; color: white; font-weight: bold; font-size: 16px; padding: 14px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; }
       button:disabled { background: #a0c2f9; cursor: not-allowed; }
-      #preview { max-width: 100%; margin-top: 12px; display: none; border-radius: 8px; border: 1px solid #ddd; }
+      .btn-clear { background: #dc3545; padding: 8px; font-size: 14px; margin-top: 10px; display: none; }
+      
+      /* Previews */
+      .preview-container { display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px; }
+      .preview-container img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      
       .msg { text-align: center; margin-top: 15px; font-weight: bold; }
     </style>
   </head>
@@ -19,8 +31,8 @@
     <div class="container">
       <h2>🎯 Target Tracker</h2>
       
-      <!-- Store Manager Name input ko screen se HIDE kar diya hai -->
-      <input type="hidden" id="managerName" value="">
+      <label>Store Manager Name / ID</label>
+      <input type="text" id="managerName" placeholder="Apna naam likhein" required>
       
       <label>Select Target Criteria</label>
       <select id="criteria">
@@ -30,35 +42,71 @@
         <option value="Google Review">Google Review</option>
       </select>
       
-      <label>Live Photo Click / Gallery Upload</label>
-      <input type="file" id="imageInput" accept="image/*" capture="environment">
-      <img id="preview" />
+      <!-- Option 1: Direct Live Camera -->
+      <label style="margin-top: 20px;">Upload Proof (Max 3 Photos)</label>
+      <div class="file-input-wrapper">
+        <label>📸 Option 1: Live Camera Click</label>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment">
+      </div>
+
+      <!-- Option 2: Gallery Upload -->
+      <div class="file-input-wrapper">
+        <label>🖼️ Option 2: Gallery Upload</label>
+        <input type="file" id="galleryInput" accept="image/*" multiple>
+      </div>
+      
+      <div id="previewContainer" class="preview-container"></div>
+      <button id="clearBtn" class="btn-clear" onclick="clearImages()">🗑️ Clear Selected Photos</button>
       
       <button id="submitBtn" onclick="sendData()">Submit Proof</button>
       <div id="status" class="msg"></div>
     </div>
 
     <script>
-      // Aapka Google Apps Script Web App URL
+      // ⚠️ Yahan apni APP SCRIPT WEB APP URL lagayein
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbVZPBeteuskmw4I5CrPcUlKHuUh6-F_ICgl5jBdbhslBbbOby0OIZAW-zm8tIX9QrsQ/exec";
-      let fileData = {};
+      
+      let processedImages = [];
+      let currentSignatures = new Set(); // Duplicate track karne ke liye
 
-      // URL ya LocalStorage se automatic Logged-In User ID pick karna
-      window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        // Dashboard se aane wala ?user=xxx ya localStorage se username lega
-        const autoUser = urlParams.get('user') || localStorage.getItem('username') || "Store Manager";
-        document.getElementById('managerName').value = autoUser;
-      });
+      // Common function jo Camera aur Gallery dono se aayi hui photos process karega
+      function processSelectedFiles(e) {
+        let files = Array.from(e.target.files);
+        let previewContainer = document.getElementById('previewContainer');
+        
+        // Input ko khali karna taaki same photo dubara select ho sake agar user clear kare
+        e.target.value = '';
 
-      document.getElementById('imageInput').addEventListener('change', function(e) {
-        let file = e.target.files[0];
-        if (file) {
+        // Check if limit reached
+        if (processedImages.length >= 3) {
+          alert("⚠️ Aap pehle hi 3 photos add kar chuke hain!");
+          return;
+        }
+
+        // Calculate how many more files we can add
+        let slotsLeft = 3 - processedImages.length;
+        if (files.length > slotsLeft) {
+          alert(`⚠️ Max 3 photos allowed! Sirf ${slotsLeft} photo(s) aur li jaayengi, baaki remove kar di gayi hain.`);
+          files = files.slice(0, slotsLeft);
+        }
+
+        let duplicateFound = false;
+
+        files.forEach((file, index) => {
+          // DUPLICATE CHECK
+          let sig = file.name + "_" + file.size;
+          if (currentSignatures.has(sig)) {
+            duplicateFound = true;
+            return;
+          }
+          currentSignatures.add(sig);
+
           let reader = new FileReader();
           reader.onload = function(event) {
             let img = new Image();
             img.src = event.target.result;
             img.onload = function() {
+              // Canvas Compression
               let canvas = document.createElement('canvas');
               let maxWidth = 1000;
               let scaleSize = maxWidth / img.width;
@@ -73,22 +121,46 @@
               
               let ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              
               let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
               
-              fileData = {
+              processedImages.push({
                 image: compressedDataUrl,
-                fileName: (file.name || "proof") + ".jpg",
+                fileName: (file.name || `proof_${Date.now()}`) + ".jpg",
                 mimeType: "image/jpeg"
-              };
+              });
+
+              // Add image to preview
+              let previewImg = document.createElement('img');
+              previewImg.src = compressedDataUrl;
+              previewContainer.appendChild(previewImg);
               
-              let preview = document.getElementById('preview');
-              preview.src = compressedDataUrl;
-              preview.style.display = 'block';
+              // Show clear button
+              document.getElementById('clearBtn').style.display = 'block';
             };
           };
           reader.readAsDataURL(file);
+        });
+
+        // Warn user if duplicate was skipped
+        if (duplicateFound) {
+          setTimeout(() => {
+            alert("🚫 Duplicate photos are not allowed by admin! Duplicate image automatically hata di gayi hai.");
+          }, 300);
         }
-      });
+      }
+
+      // Dono inputs par same logic lagaya hai
+      document.getElementById('cameraInput').addEventListener('change', processSelectedFiles);
+      document.getElementById('galleryInput').addEventListener('change', processSelectedFiles);
+
+      // Photos clear karne ka function
+      function clearImages() {
+        processedImages = [];
+        currentSignatures.clear();
+        document.getElementById('previewContainer').innerHTML = '';
+        document.getElementById('clearBtn').style.display = 'none';
+      }
 
       function sendData() {
         let managerName = document.getElementById('managerName').value;
@@ -96,21 +168,19 @@
         let status = document.getElementById('status');
         let btn = document.getElementById('submitBtn');
 
-        if (!criteria || !fileData.image) {
-          alert("Kripya criteria select karein aur image attach karein!");
+        if (!managerName || !criteria || processedImages.length === 0) {
+          alert("Kripya sabhi details bharein aur kam se kam 1 photo upload karein!");
           return;
         }
 
         btn.disabled = true;
         status.style.color = '#1a73e8';
-        status.innerText = '⚡ Fast Uploading... Wait karein...';
+        status.innerText = `⚡ Uploading ${processedImages.length} photo(s)... Wait karein...`;
 
         let payload = {
           managerName: managerName,
           criteria: criteria,
-          image: fileData.image,
-          fileName: fileData.fileName,
-          mimeType: fileData.mimeType
+          images: processedImages 
         };
 
         fetch(SCRIPT_URL, {
@@ -119,12 +189,18 @@
         })
         .then(response => response.text())
         .then(data => {
-          status.style.color = 'green';
-          status.innerText = "✔ Successfully Save Ho Gaya!";
-          document.getElementById('criteria').value = '';
-          document.getElementById('imageInput').value = '';
-          document.getElementById('preview').style.display = 'none';
-          fileData = {};
+          if (data.includes("Success")) {
+            status.style.color = 'green';
+            status.innerText = `✔ ${processedImages.length} Photo(s) Successfully Save Ho Gayi!`;
+            
+            // Form Reset
+            document.getElementById('managerName').value = '';
+            document.getElementById('criteria').value = '';
+            clearImages(); // Resets images and hides clear button
+          } else {
+            status.style.color = 'red';
+            status.innerText = data; 
+          }
           btn.disabled = false;
         })
         .catch(error => {
