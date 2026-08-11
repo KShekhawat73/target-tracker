@@ -8,7 +8,7 @@
       .container { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
       h2 { text-align: center; color: #1a73e8; margin-top: 0; }
       label { font-weight: bold; margin-top: 15px; display: block; color: #333; }
-      input[type="text"], select { width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
+      select { width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
       
       /* Style for File Inputs */
       .file-input-wrapper { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 8px; border: 1px dashed #ccc; }
@@ -31,10 +31,10 @@
     <div class="container">
       <h2>🎯 Target Tracker</h2>
       
-      <label>Store Manager Name / ID</label>
-      <input type="text" id="managerName" placeholder="Apna naam likhein" required>
+      <!-- Hidden Input (Manager ID automatically save hogi) -->
+      <input type="hidden" id="managerName" value="">
       
-      <label>Select Target Criteria</label>
+      <label style="margin-top: 5px;">Select Target Criteria</label>
       <select id="criteria">
         <option value="">-- Criteria Select Karein --</option>
         <option value="Instagram Follow">Instagram Follow</option>
@@ -67,23 +67,27 @@
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbVZPBeteuskmw4I5CrPcUlKHuUh6-F_ICgl5jBdbhslBbbOby0OIZAW-zm8tIX9QrsQ/exec";
       
       let processedImages = [];
-      let currentSignatures = new Set(); // Duplicate track karne ke liye
+      let currentSignatures = new Set(); 
 
-      // Common function jo Camera aur Gallery dono se aayi hui photos process karega
+      // Jab page load hoga, URL se ID uthakar hidden input me daal dega
+      window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoUser = urlParams.get('user') || localStorage.getItem('username') || "Unknown Manager";
+        document.getElementById('managerName').value = autoUser;
+      });
+
+      // Camera & Gallery Process Logic
       function processSelectedFiles(e) {
         let files = Array.from(e.target.files);
         let previewContainer = document.getElementById('previewContainer');
         
-        // Input ko khali karna taaki same photo dubara select ho sake agar user clear kare
-        e.target.value = '';
+        e.target.value = ''; // Input ko khali karna
 
-        // Check if limit reached
         if (processedImages.length >= 3) {
           alert("⚠️ Aap pehle hi 3 photos add kar chuke hain!");
           return;
         }
 
-        // Calculate how many more files we can add
         let slotsLeft = 3 - processedImages.length;
         if (files.length > slotsLeft) {
           alert(`⚠️ Max 3 photos allowed! Sirf ${slotsLeft} photo(s) aur li jaayengi, baaki remove kar di gayi hain.`);
@@ -93,7 +97,6 @@
         let duplicateFound = false;
 
         files.forEach((file, index) => {
-          // DUPLICATE CHECK
           let sig = file.name + "_" + file.size;
           if (currentSignatures.has(sig)) {
             duplicateFound = true;
@@ -106,7 +109,6 @@
             let img = new Image();
             img.src = event.target.result;
             img.onload = function() {
-              // Canvas Compression
               let canvas = document.createElement('canvas');
               let maxWidth = 1000;
               let scaleSize = maxWidth / img.width;
@@ -130,19 +132,16 @@
                 mimeType: "image/jpeg"
               });
 
-              // Add image to preview
               let previewImg = document.createElement('img');
               previewImg.src = compressedDataUrl;
               previewContainer.appendChild(previewImg);
               
-              // Show clear button
               document.getElementById('clearBtn').style.display = 'block';
             };
           };
           reader.readAsDataURL(file);
         });
 
-        // Warn user if duplicate was skipped
         if (duplicateFound) {
           setTimeout(() => {
             alert("🚫 Duplicate photos are not allowed by admin! Duplicate image automatically hata di gayi hai.");
@@ -150,7 +149,6 @@
         }
       }
 
-      // Dono inputs par same logic lagaya hai
       document.getElementById('cameraInput').addEventListener('change', processSelectedFiles);
       document.getElementById('galleryInput').addEventListener('change', processSelectedFiles);
 
@@ -168,8 +166,8 @@
         let status = document.getElementById('status');
         let btn = document.getElementById('submitBtn');
 
-        if (!managerName || !criteria || processedImages.length === 0) {
-          alert("Kripya sabhi details bharein aur kam se kam 1 photo upload karein!");
+        if (!criteria || processedImages.length === 0) {
+          alert("Kripya criteria select karein aur kam se kam 1 photo upload karein!");
           return;
         }
 
@@ -193,10 +191,9 @@
             status.style.color = 'green';
             status.innerText = `✔ ${processedImages.length} Photo(s) Successfully Save Ho Gayi!`;
             
-            // Form Reset
-            document.getElementById('managerName').value = '';
+            // Form Reset (Manager Name khali nahi hoga)
             document.getElementById('criteria').value = '';
-            clearImages(); // Resets images and hides clear button
+            clearImages(); 
           } else {
             status.style.color = 'red';
             status.innerText = data; 
