@@ -118,6 +118,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             overflow-x: auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
         }
 
         table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -149,6 +150,19 @@
 
         .empty-msg { text-align: center; padding: 40px; color: #94a3b8; font-size: 1.1rem; }
         #loading { text-align: center; color: #38bdf8; font-weight: bold; margin: 30px 0; font-size: 1.2rem; }
+
+        /* User Proofs Gallery CSS (NEW) */
+        .proofs-section { display: none; margin-top: 20px; }
+        .proofs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .proof-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; text-align: center; transition: transform 0.2s;}
+        .proof-card:hover { transform: translateY(-5px); border-color: #38bdf8; }
+        .proof-crit { font-weight: 800; margin-bottom: 8px; font-size: 1.05rem;}
+        .proof-crit.Instagram { color: #E1306C; }
+        .proof-crit.YouTube { color: #ffffff; }
+        .proof-crit.Google { color: #4285F4; }
+        .proof-date { font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; }
+        .proof-btn { display: inline-block; padding: 8px 15px; background: #38bdf8; color: #0f172a; text-decoration: none; font-weight: bold; border-radius: 6px; font-size: 0.9rem; }
+        .proof-btn:hover { background: #0284c7; color: white;}
     </style>
 </head>
 <body>
@@ -250,6 +264,15 @@
             <!-- Updated empty message text -->
             <div id="emptyMsg" class="empty-msg" style="display: none;">🚫 No data found.</div>
         </div>
+
+        <!-- 5. Proofs Gallery (NEW: Visible only when specific manager is selected) -->
+        <div class="proofs-section" id="proofsSection">
+            <h2 class="section-title">📸 Uploaded Proofs for <span id="proofManagerName" style="color: #38bdf8; text-transform: capitalize;"></span></h2>
+            <div class="proofs-grid" id="proofsGrid">
+                <!-- Data Javascript se aayega -->
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -296,7 +319,7 @@
             }
         }
 
-        // 3. Robust CSV Parser & Date Formatter
+        // 3. Robust CSV Parser & Date Formatter (UPDATED: Added Time & File URL extraction)
         function parseCSV(csvText) {
             const lines = csvText.split(/\r?\n/);
             if (lines.length < 2) return [];
@@ -305,8 +328,13 @@
             const data = [];
 
             const dateIdx = headers.indexOf("date") !== -1 ? headers.indexOf("date") : 0;
+            const timeIdx = headers.indexOf("time") !== -1 ? headers.indexOf("time") : 1;
             const nameIdx = headers.indexOf("manager name") !== -1 ? headers.indexOf("manager name") : 2;
             const criteriaIdx = headers.indexOf("criteria") !== -1 ? headers.indexOf("criteria") : 3;
+            
+            // Find URL column dynamically (Assuming it's the 5th column based on Google Apps Script)
+            let urlIdx = headers.findIndex(h => h.includes("url") || h.includes("link") || h.includes("image"));
+            if(urlIdx === -1) urlIdx = 4; // Default to 5th column
 
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
@@ -317,15 +345,16 @@
                 let dateParts = cols[dateIdx].split('/');
                 let parsedDate = null;
                 if(dateParts.length === 3) {
-                    // new Date(year, monthIndex, day)
                     parsedDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
                 }
 
                 data.push({
                     rawDate: cols[dateIdx],
+                    time: cols[timeIdx] || "",
                     parsedDate: parsedDate,
                     name: cols[nameIdx] || "Unknown",
-                    criteria: cols[criteriaIdx] || ""
+                    criteria: cols[criteriaIdx] || "",
+                    fileUrl: cols[urlIdx] || ""
                 });
             }
             return data;
@@ -369,7 +398,7 @@
             document.getElementById('month-all').innerText = mTotal;
         }
 
-        // 6. Filter by Date Range & Manager, then Render Table & Stats
+        // 6. Filter by Date Range & Manager, then Render Table, Stats & Gallery
         function filterAndRender() {
             const startVal = document.getElementById('startDate').value;
             const endVal = document.getElementById('endDate').value;
@@ -435,7 +464,6 @@
 
             if (managers.length === 0) {
                 emptyMsg.style.display = 'block';
-                return;
             } else {
                 emptyMsg.style.display = 'none';
             }
@@ -454,6 +482,38 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            // 7. NEW: Render Proof Gallery (Only if a specific manager is chosen)
+            const proofsSection = document.getElementById('proofsSection');
+            const proofsGrid = document.getElementById('proofsGrid');
+            
+            if (selectedManager !== "ALL" && filtered.length > 0) {
+                proofsSection.style.display = 'block';
+                document.getElementById('proofManagerName').innerText = managers[0].displayName; 
+                proofsGrid.innerHTML = '';
+
+                filtered.forEach(row => {
+                    if (row.fileUrl) { // Only render if a URL exists
+                        let critClass = "";
+                        if (row.criteria.toLowerCase().includes("instagram")) critClass = "Instagram";
+                        else if (row.criteria.toLowerCase().includes("youtube")) critClass = "YouTube";
+                        else if (row.criteria.toLowerCase().includes("google")) critClass = "Google";
+
+                        let timeString = row.time ? `| 🕒 ${row.time}` : '';
+
+                        const card = document.createElement('div');
+                        card.className = 'proof-card';
+                        card.innerHTML = `
+                            <div class="proof-crit ${critClass}">${row.criteria}</div>
+                            <div class="proof-date">📅 ${row.rawDate} ${timeString}</div>
+                            <a href="${row.fileUrl}" target="_blank" class="proof-btn">🔗 View Photo</a>
+                        `;
+                        proofsGrid.appendChild(card);
+                    }
+                });
+            } else {
+                proofsSection.style.display = 'none';
+            }
         }
     </script>
 </body>
